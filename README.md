@@ -30,8 +30,8 @@ bun install
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 
-# 3. Push the database schema (creates the auth tables)
-cd backend && bun run db:push && cd ..
+# 3. Apply the database migrations (creates all tables)
+cd backend && bun run db:migrate && cd ..
 
 # 4. Run the backend (:3000) and frontend (:5173) together
 bun run dev
