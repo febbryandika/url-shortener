@@ -38,11 +38,18 @@ api.get('/me', (c) => {
 
 app.route('/api', api)
 
+// Global error handler + 404 — structured JSON per SPEC §5: { error, code }
+app.onError((err, c) => {
+  console.error(`[error] ${c.req.method} ${c.req.path}`, err)
+  return c.json({ error: 'Internal Server Error', code: 'INTERNAL_ERROR' }, 500)
+})
+
+app.notFound((c) => c.json({ error: 'Not Found', code: 'NOT_FOUND' }, 404))
+
 // Export for RPC type inference
 export type AppType = typeof app
 
 const port = Number(process.env.PORT ?? 3000)
-console.log(`Server running on http://localhost:${port}`)
 
 export default {
   port,
