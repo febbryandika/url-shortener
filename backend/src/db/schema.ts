@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, boolean, index } from 'drizzle-orm/pg-core'
+import { createId } from '@paralleldrive/cuid2'
 
 // ── better-auth required tables ──────────────────────────────────────────────
 // Do NOT rename these tables or columns — better-auth expects this exact shape.
@@ -54,13 +55,47 @@ export const verification = pgTable('verification', {
   updatedAt: timestamp('updated_at'),
 })
 
-// ── Your app tables go below ──────────────────────────────────────────────────
-// Example:
-// import { createId } from '@paralleldrive/cuid2'
-//
-// export const posts = pgTable('posts', {
-//   id:        text('id').primaryKey().$defaultFn(() => createId()),
-//   userId:    text('user_id').notNull().references(() => user.id),
-//   title:     text('title').notNull(),
-//   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-// })
+// ── Application tables (SPEC §4) ──────────────────────────────────────────────
+
+export const links = pgTable(
+  'links',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    slug: text('slug').notNull().unique(),
+    url: text('url').notNull(),
+    title: text('title'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index('idx_link_user').on(t.userId),
+    index('idx_link_slug').on(t.slug),
+  ],
+)
+
+export const clicks = pgTable(
+  'clicks',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    linkId: text('link_id')
+      .notNull()
+      .references(() => links.id, { onDelete: 'cascade' }),
+    clickedAt: timestamp('clicked_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    referrer: text('referrer'),
+    browser: text('browser'),
+    deviceType: text('device_type'),
+    country: text('country'),
+  },
+  (t) => [index('idx_click_link_at').on(t.linkId, t.clickedAt)],
+)
