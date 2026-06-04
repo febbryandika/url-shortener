@@ -1,0 +1,10 @@
+node_modules
+dist
+bun.lock
+frontend/src/routeTree.gen.ts
+backend/drizzle
+
+# Private planning docs (gitignored)
+SPEC.md
+CLAUDE.md
+.claude
