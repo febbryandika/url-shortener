@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { auth } from './lib/auth'
 import { requireAuth } from './lib/middleware'
+import './types'
 
 const app = new Hono()
 
