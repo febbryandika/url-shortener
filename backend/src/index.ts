@@ -18,7 +18,7 @@ app.use(
     exposeHeaders: ['Content-Length'],
     maxAge: 600,
     credentials: true,
-  })
+  }),
 )
 
 // Auth routes — better-auth handles /api/auth/**

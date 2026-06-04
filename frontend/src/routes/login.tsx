@@ -38,7 +38,9 @@ function LoginPage() {
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="w-full max-w-sm space-y-6">
         <div className="space-y-1 text-center">
-          <h2 className="text-2xl font-bold">{isSignUp ? 'Create account' : 'Sign in'}</h2>
+          <h2 className="text-2xl font-bold">
+            {isSignUp ? 'Create account' : 'Sign in'}
+          </h2>
           <p className="text-muted-foreground text-sm">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <button
@@ -54,7 +56,9 @@ function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
             <div className="space-y-1">
-              <label htmlFor="name" className="text-sm font-medium">Name</label>
+              <label htmlFor="name" className="text-sm font-medium">
+                Name
+              </label>
               <input
                 id="name"
                 type="text"
@@ -68,7 +72,9 @@ function LoginPage() {
           )}
 
           <div className="space-y-1">
-            <label htmlFor="email" className="text-sm font-medium">Email</label>
+            <label htmlFor="email" className="text-sm font-medium">
+              Email
+            </label>
             <input
               id="email"
               type="email"
@@ -81,7 +87,9 @@ function LoginPage() {
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="password" className="text-sm font-medium">Password</label>
+            <label htmlFor="password" className="text-sm font-medium">
+              Password
+            </label>
             <input
               id="password"
               type="password"

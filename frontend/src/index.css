@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* Register the shadcn-style HSL design tokens (defined in :root / .dark below)
    with Tailwind v4's theme so utilities like bg-background, text-foreground and
