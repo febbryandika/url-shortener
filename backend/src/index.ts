@@ -39,6 +39,14 @@ app.on(['GET', 'POST'], '/api/auth/**', (c) => auth.handler(c.req.raw))
 // Health check
 app.get('/api/health', (c) => c.json({ status: 'ok' }))
 
+// Link CRUD routes (SPEC §5). Registered BEFORE the catch-all `/api` mount below
+// so linkRoutes' own middleware (write rate limit + requireAuth) handles every
+// /api/links request. If `/api` mounted first, its `requireAuth` would shadow
+// these for unauthenticated requests — 401 before the rate limiter ever runs —
+// and double-run auth for authenticated ones. Captured into `routes` so the
+// inferred AppType carries the routes to the Hono RPC client.
+const routes = app.route('/api/links', linkRoutes)
+
 // Protected routes example
 const api = new Hono()
 api.use('*', requireAuth)
@@ -49,11 +57,6 @@ api.get('/me', (c) => {
 })
 
 app.route('/api', api)
-
-// Link CRUD routes (SPEC §5). Mounted as a chained sub-router and captured into
-// `routes` so the inferred AppType carries them to the Hono RPC client — a plain
-// `app.route(...)` statement would discard the route types.
-const routes = app.route('/api/links', linkRoutes)
 
 // Global error + 404 handlers — structured JSON per SPEC §5: { error, code }
 app.onError(errorHandler)

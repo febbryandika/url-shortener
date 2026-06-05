@@ -3,6 +3,7 @@ import { desc, eq } from 'drizzle-orm'
 import { db } from '../db'
 import { clicks, links } from '../db/schema'
 import { requireAuth } from '../lib/middleware'
+import { rateLimit } from '../lib/rate-limit'
 import { validate } from '../lib/validate'
 import {
   createLinkSchema,
@@ -93,7 +94,16 @@ async function requireOwnedLink(id: string, userId: string): Promise<LinkRow> {
   return link
 }
 
+// Rate limit writes — 60 POST/PUT/DELETE per minute per IP (abuse protection);
+// GET reads are unthrottled. Lives on the router so '*' matches each route once
+// (an app-level '/api/links/*' also matches the bare collection, double-counting
+// it). Runs before requireAuth so unauthenticated spam is throttled too.
+const linkWriteRateLimit = rateLimit({ windowMs: 60_000, limit: 60 })
+
 const linkRoutes = new Hono()
+  .use('*', (c, next) =>
+    c.req.method === 'GET' ? next() : linkWriteRateLimit(c, next),
+  )
   .use('*', requireAuth)
   .get('/', async (c) => {
     const userId = c.get('user').id
