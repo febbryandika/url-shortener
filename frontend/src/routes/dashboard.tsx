@@ -1,7 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { DashboardLayout } from '@/components/dashboard-layout'
+import { requireSession } from '@/lib/auth-guard'
 
 export const Route = createFileRoute('/dashboard')({
+  beforeLoad: requireSession,
   component: DashboardPage,
 })
 

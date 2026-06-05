@@ -1,8 +1,10 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import { authClient } from '@/lib/auth-client'
+import { redirectIfAuthenticated } from '@/lib/auth-guard'
 
 export const Route = createFileRoute('/login')({
+  beforeLoad: redirectIfAuthenticated,
   component: LoginPage,
 })
 
