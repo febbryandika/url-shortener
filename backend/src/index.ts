@@ -6,6 +6,7 @@ import { auth } from './lib/auth'
 import { requireAuth } from './lib/middleware'
 import { rateLimit } from './lib/rate-limit'
 import { errorHandler, notFoundHandler } from './lib/errors'
+import linkRoutes from './routes/links'
 import './types'
 
 const app = new Hono()
@@ -49,12 +50,17 @@ api.get('/me', (c) => {
 
 app.route('/api', api)
 
+// Link CRUD routes (SPEC §5). Mounted as a chained sub-router and captured into
+// `routes` so the inferred AppType carries them to the Hono RPC client — a plain
+// `app.route(...)` statement would discard the route types.
+const routes = app.route('/api/links', linkRoutes)
+
 // Global error + 404 handlers — structured JSON per SPEC §5: { error, code }
 app.onError(errorHandler)
 app.notFound(notFoundHandler)
 
 // Export for RPC type inference
-export type AppType = typeof app
+export type AppType = typeof routes
 
 const port = Number(process.env.PORT ?? 3000)
 
