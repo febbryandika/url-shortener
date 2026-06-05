@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { urlSchema } from './schemas'
+import { slugSchema, urlSchema } from './schemas'
 
 describe('urlSchema', () => {
   test('accepts http and https URLs', () => {
@@ -25,5 +25,25 @@ describe('urlSchema', () => {
   test('rejects malformed input', () => {
     expect(urlSchema.safeParse('not a url').success).toBe(false)
     expect(urlSchema.safeParse('').success).toBe(false)
+  })
+})
+
+describe('slugSchema', () => {
+  test('accepts valid slugs', () => {
+    for (const value of ['abc', 'a1b', 'my-link-123', 'a'.repeat(32)]) {
+      expect(slugSchema.safeParse(value).success).toBe(true)
+    }
+  })
+
+  test('rejects out-of-range length', () => {
+    expect(slugSchema.safeParse('ab').success).toBe(false) // too short
+    expect(slugSchema.safeParse('a'.repeat(33)).success).toBe(false) // too long
+  })
+
+  test('rejects disallowed characters (incl. path traversal)', () => {
+    const invalid = ['Abc', 'a b', 'a_b', 'a.b', 'a/b', '../etc', 'a@b', '']
+    for (const value of invalid) {
+      expect(slugSchema.safeParse(value).success).toBe(false)
+    }
   })
 })

@@ -10,7 +10,15 @@ import { z } from 'zod'
 // ── Field schemas ─────────────────────────────────────────────────────────────
 
 // Custom slug: 3–32 chars, lowercase letters / digits / hyphens (SPEC §3.1, §5).
-export const slugSchema = z.string().regex(/^[a-z0-9-]{3,32}$/)
+// The charset excludes `/`, `.`, and whitespace, so it cannot express path
+// traversal (SPEC §7: "no path traversal characters"). Regex is the exact SPEC
+// pattern; only a friendly message is added.
+export const slugSchema = z
+  .string()
+  .regex(
+    /^[a-z0-9-]{3,32}$/,
+    'Slug must be 3–32 characters: lowercase letters, numbers, and hyphens only',
+  )
 
 // Destination URL — must be a valid http(s) URL. `z.string().url()` alone accepts
 // dangerous schemes (javascript:, data:, file:, …); we additionally restrict to
