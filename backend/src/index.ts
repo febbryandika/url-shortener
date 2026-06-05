@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { auth } from './lib/auth'
 import { requireAuth } from './lib/middleware'
+import { rateLimit } from './lib/rate-limit'
 import './types'
 
 const app = new Hono()
@@ -19,6 +20,12 @@ app.use(
     maxAge: 600,
     credentials: true,
   }),
+)
+
+// Rate limit auth endpoints — 10 POST/min per IP (SPEC §7, brute-force protection)
+const authRateLimit = rateLimit({ windowMs: 60_000, limit: 10 })
+app.use('/api/auth/*', (c, next) =>
+  c.req.method === 'POST' ? authRateLimit(c, next) : next(),
 )
 
 // Auth routes — better-auth handles /api/auth/**
