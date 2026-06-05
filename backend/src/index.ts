@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
+import { requestId } from 'hono/request-id'
 import { auth } from './lib/auth'
 import { requireAuth } from './lib/middleware'
 import { rateLimit } from './lib/rate-limit'
@@ -9,7 +10,9 @@ import './types'
 
 const app = new Hono()
 
-// Middleware
+// Middleware — requestId first so every log line and the X-Request-Id response
+// header carry the same id.
+app.use('*', requestId())
 app.use('*', logger())
 app.use(
   '*',

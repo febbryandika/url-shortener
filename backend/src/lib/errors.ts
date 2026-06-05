@@ -36,8 +36,11 @@ export const errorHandler: ErrorHandler = (err, c) => {
     return c.json({ error: err.message, code: 'HTTP_ERROR' }, err.status)
   }
 
-  // Unexpected: log server-side, never leak internals to the client.
-  console.error(`[error] ${c.req.method} ${c.req.path}`, err)
+  // Unexpected: log server-side (with the request id) — never leak internals.
+  console.error(
+    `[error] ${c.get('requestId')} ${c.req.method} ${c.req.path}`,
+    err,
+  )
   return c.json({ error: 'Internal Server Error', code: 'INTERNAL_ERROR' }, 500)
 }
 
