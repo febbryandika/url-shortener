@@ -21,14 +21,18 @@ function LoginPage() {
     setLoading(true)
 
     try {
-      if (isSignUp) {
-        await authClient.signUp.email({ email, password, name })
-      } else {
-        await authClient.signIn.email({ email, password })
+      const { error: authError } = isSignUp
+        ? await authClient.signUp.email({ email, password, name })
+        : await authClient.signIn.email({ email, password })
+
+      if (authError) {
+        setError(authError.message ?? 'Authentication failed')
+        return
       }
-      router.navigate({ to: '/' })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+
+      router.navigate({ to: '/dashboard' })
+    } catch {
+      setError('Network error — please try again')
     } finally {
       setLoading(false)
     }
