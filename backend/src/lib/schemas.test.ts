@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { slugSchema, urlSchema } from './schemas'
+import { isErrorResponse, slugSchema, urlSchema } from './schemas'
 
 describe('urlSchema', () => {
   test('accepts http and https URLs', () => {
@@ -45,5 +45,22 @@ describe('slugSchema', () => {
     for (const value of invalid) {
       expect(slugSchema.safeParse(value).success).toBe(false)
     }
+  })
+})
+
+describe('isErrorResponse', () => {
+  test('accepts a structured { error, code } body', () => {
+    expect(isErrorResponse({ error: 'Forbidden', code: 'FORBIDDEN' })).toBe(
+      true,
+    )
+  })
+
+  test('rejects non-error shapes', () => {
+    expect(isErrorResponse({ links: [] })).toBe(false)
+    expect(isErrorResponse({ error: 'x' })).toBe(false) // missing code
+    expect(isErrorResponse({ code: 'x' })).toBe(false) // missing error
+    expect(isErrorResponse({ error: 1, code: 2 })).toBe(false) // wrong types
+    expect(isErrorResponse(null)).toBe(false)
+    expect(isErrorResponse('nope')).toBe(false)
   })
 })

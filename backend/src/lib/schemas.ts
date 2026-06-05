@@ -76,6 +76,32 @@ export type ErrorResponse = {
   code: string // machine-readable, e.g. "SLUG_TAKEN", "NOT_FOUND", "FORBIDDEN"
 }
 
+// Well-known machine-readable error codes (SPEC §5). `ErrorResponse.code` stays a
+// plain string so domain-specific codes remain valid; this union just documents
+// the shared ones the frontend can branch on.
+export type ErrorCode =
+  | 'VALIDATION_ERROR'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'RATE_LIMITED'
+  | 'HTTP_ERROR'
+  | 'INTERNAL_ERROR'
+  | 'SLUG_TAKEN'
+
+// Runtime guard: narrows an unknown JSON body (e.g. from `response.json()`) to
+// the shared ErrorResponse shape, so the frontend can tell a structured error
+// apart from a success payload.
+export function isErrorResponse(value: unknown): value is ErrorResponse {
+  if (typeof value !== 'object' || value === null) return false
+  return (
+    'error' in value &&
+    typeof value.error === 'string' &&
+    'code' in value &&
+    typeof value.code === 'string'
+  )
+}
+
 // Flatten a ZodError into a single user-friendly string for the `error` field of
 // an ErrorResponse, e.g. "url: URL must start with http:// or https://". Mirrors
 // the issue-formatting style already used in lib/env.ts.
