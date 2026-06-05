@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import type { MouseEvent, ReactNode } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useRouter } from '@tanstack/react-router'
+import { authClient } from '@/lib/auth-client'
 
 function MenuIcon() {
   return (
@@ -116,6 +117,56 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
+function SignOutIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-5"
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="m16 17 5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  )
+}
+
+function UserSection() {
+  const router = useRouter()
+  const { data: session } = authClient.useSession()
+
+  async function handleSignOut() {
+    await authClient.signOut()
+    router.navigate({ to: '/login' })
+  }
+
+  return (
+    <div className="mt-auto border-t border-border pt-4">
+      <div className="px-3 py-2">
+        <p className="truncate text-sm font-medium text-foreground">
+          {session?.user.name}
+        </p>
+        <p className="truncate text-xs text-muted-foreground">
+          {session?.user.email}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+      >
+        <SignOutIcon />
+        Sign out
+      </button>
+    </div>
+  )
+}
+
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const drawerRef = useRef<HTMLDialogElement>(null)
 
@@ -139,6 +190,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         <nav aria-label="Main" className="mt-8">
           <NavLinks />
         </nav>
+        <UserSection />
       </aside>
 
       {/* Top bar — mobile */}
@@ -177,6 +229,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           <nav aria-label="Main" className="mt-8">
             <NavLinks onNavigate={handleCloseDrawer} />
           </nav>
+          <UserSection />
         </div>
       </dialog>
 
