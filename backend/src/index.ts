@@ -6,6 +6,7 @@ import { auth } from './lib/auth'
 import { requireAuth } from './lib/middleware'
 import { rateLimit } from './lib/rate-limit'
 import { errorHandler, notFoundHandler } from './lib/errors'
+import linkRoutes from './routes/links'
 import './types'
 
 const app = new Hono()
@@ -38,6 +39,14 @@ app.on(['GET', 'POST'], '/api/auth/**', (c) => auth.handler(c.req.raw))
 // Health check
 app.get('/api/health', (c) => c.json({ status: 'ok' }))
 
+// Link CRUD routes (SPEC §5). Registered BEFORE the catch-all `/api` mount below
+// so linkRoutes' own middleware (write rate limit + requireAuth) handles every
+// /api/links request. If `/api` mounted first, its `requireAuth` would shadow
+// these for unauthenticated requests — 401 before the rate limiter ever runs —
+// and double-run auth for authenticated ones. Captured into `routes` so the
+// inferred AppType carries the routes to the Hono RPC client.
+const routes = app.route('/api/links', linkRoutes)
+
 // Protected routes example
 const api = new Hono()
 api.use('*', requireAuth)
@@ -54,7 +63,7 @@ app.onError(errorHandler)
 app.notFound(notFoundHandler)
 
 // Export for RPC type inference
-export type AppType = typeof app
+export type AppType = typeof routes
 
 const port = Number(process.env.PORT ?? 3000)
 

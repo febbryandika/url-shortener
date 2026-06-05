@@ -67,6 +67,22 @@ export const updateLinkSchema = z
 export type CreateLinkInput = z.infer<typeof createLinkSchema>
 export type UpdateLinkInput = z.infer<typeof updateLinkSchema>
 
+// ── API response shapes (SPEC §5) ─────────────────────────────────────────────
+
+// GET /api/links list item. `shortUrl` is the absolute /r/:slug URL; `clickCount`
+// is computed per request via a COUNT sub-query (not stored on the row). Mutation
+// endpoints return a single item under `{ link }`; the list returns `{ links }`.
+export type LinkListItem = {
+  id: string
+  slug: string
+  url: string
+  title: string | null
+  shortUrl: string
+  expiresAt: string | null // ISO 8601
+  clickCount: number
+  createdAt: string // ISO 8601
+}
+
 // ── Shared API error contract (SPEC §5) ───────────────────────────────────────
 
 // Every API error response uses this shape. Shared so the frontend can type
