@@ -75,3 +75,15 @@ export type ErrorResponse = {
   error: string // human-readable message
   code: string // machine-readable, e.g. "SLUG_TAKEN", "NOT_FOUND", "FORBIDDEN"
 }
+
+// Flatten a ZodError into a single user-friendly string for the `error` field of
+// an ErrorResponse, e.g. "url: URL must start with http:// or https://". Mirrors
+// the issue-formatting style already used in lib/env.ts.
+export function formatZodError(error: z.ZodError): string {
+  return error.issues
+    .map((issue) => {
+      const path = issue.path.join('.')
+      return path ? `${path}: ${issue.message}` : issue.message
+    })
+    .join('; ')
+}
