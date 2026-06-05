@@ -4,6 +4,7 @@ import { logger } from 'hono/logger'
 import { auth } from './lib/auth'
 import { requireAuth } from './lib/middleware'
 import { rateLimit } from './lib/rate-limit'
+import { errorHandler, notFoundHandler } from './lib/errors'
 import './types'
 
 const app = new Hono()
@@ -45,13 +46,9 @@ api.get('/me', (c) => {
 
 app.route('/api', api)
 
-// Global error handler + 404 — structured JSON per SPEC §5: { error, code }
-app.onError((err, c) => {
-  console.error(`[error] ${c.req.method} ${c.req.path}`, err)
-  return c.json({ error: 'Internal Server Error', code: 'INTERNAL_ERROR' }, 500)
-})
-
-app.notFound((c) => c.json({ error: 'Not Found', code: 'NOT_FOUND' }, 404))
+// Global error + 404 handlers — structured JSON per SPEC §5: { error, code }
+app.onError(errorHandler)
+app.notFound(notFoundHandler)
 
 // Export for RPC type inference
 export type AppType = typeof app
