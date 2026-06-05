@@ -176,5 +176,17 @@ const linkRoutes = new Hono()
     const clickCount = await db.$count(clicks, eq(clicks.linkId, id))
     return c.json({ link: toListItem(row, clickCount) })
   })
+  .delete('/:id', async (c) => {
+    const userId = c.get('user').id
+    const id = c.req.param('id')
+
+    await requireOwnedLink(id, userId)
+
+    // Hard delete (SPEC §3.1, no soft delete). Rows in clicks are removed by the
+    // ON DELETE CASCADE foreign key (schema.ts), so no manual cleanup is needed.
+    await db.delete(links).where(eq(links.id, id))
+
+    return c.json({ success: true })
+  })
 
 export default linkRoutes
