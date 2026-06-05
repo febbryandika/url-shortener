@@ -12,9 +12,23 @@ import { z } from 'zod'
 // Custom slug: 3–32 chars, lowercase letters / digits / hyphens (SPEC §3.1, §5).
 export const slugSchema = z.string().regex(/^[a-z0-9-]{3,32}$/)
 
-// Destination URL. Baseline matches SPEC §5's `z.string().url()`; a follow-up
-// task tightens this to reject non-http(s) protocols.
-export const urlSchema = z.string().url()
+// Destination URL — must be a valid http(s) URL. `z.string().url()` alone accepts
+// dangerous schemes (javascript:, data:, file:, …); we additionally restrict to
+// http/https to prevent stored-XSS / SSRF via shortened links (web-security:
+// choose the restrictive option).
+function isHttpUrl(value: string): boolean {
+  try {
+    const { protocol } = new URL(value)
+    return protocol === 'http:' || protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+export const urlSchema = z
+  .string()
+  .url()
+  .refine(isHttpUrl, { message: 'URL must start with http:// or https://' })
 
 // Optional human-friendly label for a link.
 export const titleSchema = z.string().max(100)
