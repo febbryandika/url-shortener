@@ -4,7 +4,11 @@ import { db } from '../db'
 import { clicks, links } from '../db/schema'
 import { requireAuth } from '../lib/middleware'
 import { validate } from '../lib/validate'
-import { createLinkSchema, type LinkListItem } from '../lib/schemas'
+import {
+  createLinkSchema,
+  updateLinkSchema,
+  type LinkListItem,
+} from '../lib/schemas'
 import { ApiError } from '../lib/errors'
 import { generateSlug } from '../lib/slug'
 
@@ -75,6 +79,20 @@ async function generateUniqueSlug(): Promise<string> {
   )
 }
 
+// Fetch a link by id and assert the caller owns it. Throws 404 if it doesn't
+// exist, 403 if it belongs to another user — never 404 for someone else's link
+// (SPEC §7: no information leakage). Returns the row for the handler to use.
+async function requireOwnedLink(id: string, userId: string): Promise<LinkRow> {
+  const link = await db.query.links.findFirst({ where: eq(links.id, id) })
+  if (!link) {
+    throw new ApiError(404, 'NOT_FOUND', 'Link not found')
+  }
+  if (link.userId !== userId) {
+    throw new ApiError(403, 'FORBIDDEN', 'Forbidden')
+  }
+  return link
+}
+
 const linkRoutes = new Hono()
   .use('*', requireAuth)
   .get('/', async (c) => {
@@ -123,6 +141,40 @@ const linkRoutes = new Hono()
     }
 
     return c.json({ link: toListItem(row, 0) }, 201)
+  })
+  .put('/:id', validate('json', updateLinkSchema), async (c) => {
+    const userId = c.get('user').id
+    const id = c.req.param('id')
+    const body = c.req.valid('json')
+
+    const existing = await requireOwnedLink(id, userId)
+
+    // Only title and expiresAt are mutable (SPEC §3.1); slug and url are
+    // immutable (updateLinkSchema is .strict(), so they're already rejected).
+    // An omitted field is left unchanged; an explicit null clears expiresAt.
+    const update: { title?: string | null; expiresAt?: Date | null } = {}
+    if ('title' in body) {
+      update.title = body.title ?? null
+    }
+    if ('expiresAt' in body) {
+      update.expiresAt = body.expiresAt ? new Date(body.expiresAt) : null
+    }
+
+    let row = existing
+    if (Object.keys(update).length > 0) {
+      const [updated] = await db
+        .update(links)
+        .set(update)
+        .where(eq(links.id, id))
+        .returning()
+      if (!updated) {
+        throw new ApiError(500, 'INTERNAL_ERROR', 'Failed to update link')
+      }
+      row = updated
+    }
+
+    const clickCount = await db.$count(clicks, eq(clicks.linkId, id))
+    return c.json({ link: toListItem(row, clickCount) })
   })
 
 export default linkRoutes
