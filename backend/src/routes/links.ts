@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { db } from '../db'
-import { links } from '../db/schema'
+import { clicks, links } from '../db/schema'
 import { requireAuth } from '../lib/middleware'
 import { validate } from '../lib/validate'
 import { createLinkSchema, type LinkListItem } from '../lib/schemas'
@@ -9,6 +9,13 @@ import { ApiError } from '../lib/errors'
 import { generateSlug } from '../lib/slug'
 
 type LinkRow = typeof links.$inferSelect
+
+// The link fields a list item is built from (userId is intentionally omitted) —
+// lets both the insert row and the list query feed toListItem.
+type LinkListSource = Pick<
+  LinkRow,
+  'id' | 'slug' | 'url' | 'title' | 'expiresAt' | 'createdAt'
+>
 
 // Absolute base for short URLs — the backend serves /r/:slug (SPEC §2), so its
 // own origin is the short-link host. Trailing slash trimmed so we never emit
@@ -23,7 +30,7 @@ function toShortUrl(slug: string): string {
 
 // Serialise a DB row into the API list-item shape (SPEC §5): timestamps as ISO
 // strings, clickCount supplied by the caller (computed per request, not stored).
-function toListItem(row: LinkRow, clickCount: number): LinkListItem {
+function toListItem(row: LinkListSource, clickCount: number): LinkListItem {
   return {
     id: row.id,
     slug: row.slug,
@@ -70,6 +77,28 @@ async function generateUniqueSlug(): Promise<string> {
 
 const linkRoutes = new Hono()
   .use('*', requireAuth)
+  .get('/', async (c) => {
+    const userId = c.get('user').id
+
+    // clickCount via a correlated COUNT sub-query (SPEC §5) — not stored on the
+    // row. db.$count builds it with eq() so the columns stay table-qualified;
+    // clicks.linkId is indexed (idx_click_link_at), so it stays cheap.
+    const rows = await db
+      .select({
+        id: links.id,
+        slug: links.slug,
+        url: links.url,
+        title: links.title,
+        expiresAt: links.expiresAt,
+        createdAt: links.createdAt,
+        clickCount: db.$count(clicks, eq(clicks.linkId, links.id)),
+      })
+      .from(links)
+      .where(eq(links.userId, userId))
+      .orderBy(desc(links.createdAt))
+
+    return c.json({ links: rows.map((row) => toListItem(row, row.clickCount)) })
+  })
   .post('/', validate('json', createLinkSchema), async (c) => {
     const userId = c.get('user').id
     const body = c.req.valid('json')
