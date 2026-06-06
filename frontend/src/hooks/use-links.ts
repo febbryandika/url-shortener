@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { client } from '@/lib/client'
 import { unwrap } from '@/lib/api'
-import type { CreateLinkInput } from '../../../backend/src/lib/schemas'
+import type {
+  CreateLinkInput,
+  UpdateLinkInput,
+} from '../../../backend/src/lib/schemas'
 
 // Shared key for the user's link list. Mutations (create/update/delete) invalidate
 // this so the dashboard refetches — the SPEC §6 cache strategy (no optimistic updates).
@@ -22,6 +25,19 @@ export function useCreateLink() {
   return useMutation({
     mutationFn: (input: CreateLinkInput) =>
       unwrap(client.api.links.$post({ json: input })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: linksQueryKey })
+    },
+  })
+}
+
+// PUT /api/links/:id → update title / expiry (slug + url are immutable), then
+// refetch the list. expiresAt: null clears an existing expiry.
+export function useUpdateLink() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: UpdateLinkInput }) =>
+      unwrap(client.api.links[':id'].$put({ param: { id }, json: input })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: linksQueryKey })
     },

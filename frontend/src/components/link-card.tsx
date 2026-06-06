@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { ApiError } from '@/lib/api'
 import { useDeleteLink } from '@/hooks/use-links'
+import { EditLinkDialog } from '@/components/edit-link-dialog'
 import type { LinkListItem } from '../../../backend/src/lib/schemas'
 
 function CopyIcon() {
@@ -81,7 +82,8 @@ export function LinkCard({ link }: { link: LinkListItem }) {
   const expiry = getExpiryStatus(link.expiresAt)
   const deleteLink = useDeleteLink()
   const confirmRef = useRef<HTMLDialogElement>(null)
-  const label = link.title ?? link.slug
+  // `||` (not `??`) so an empty-string title also falls back to the slug.
+  const label = link.title || link.slug
 
   async function handleCopy() {
     try {
@@ -170,6 +172,7 @@ export function LinkCard({ link }: { link: LinkListItem }) {
             </span>
           )}
           <div className="ml-auto flex items-center gap-0.5">
+            <EditLinkDialog link={link} />
             <button
               type="button"
               onClick={openConfirm}
