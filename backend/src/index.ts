@@ -7,6 +7,7 @@ import { requireAuth } from './lib/middleware'
 import { rateLimit } from './lib/rate-limit'
 import { errorHandler, notFoundHandler } from './lib/errors'
 import linkRoutes from './routes/links'
+import redirectRoutes from './routes/redirect'
 import './types'
 
 const app = new Hono()
@@ -47,6 +48,12 @@ app.get('/api/health', (c) => c.json({ status: 'ok' }))
 // inferred AppType carries the routes to the Hono RPC client.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- consumed by `export type AppType = typeof routes` below (Hono RPC type capture)
 const routes = app.route('/api/links', linkRoutes)
+
+// Public redirect (SPEC §2/§5): GET /r/:slug. Mounted OUTSIDE the /api auth
+// sub-app below, so it stays accessible without authentication. Not captured into
+// `routes` — the browser navigates here directly (not an RPC endpoint), so it
+// stays out of AppType and the frontend typecheck.
+app.route('/r', redirectRoutes)
 
 // Protected routes example
 const api = new Hono()
