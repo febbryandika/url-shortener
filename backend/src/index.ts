@@ -45,6 +45,7 @@ app.get('/api/health', (c) => c.json({ status: 'ok' }))
 // these for unauthenticated requests — 401 before the rate limiter ever runs —
 // and double-run auth for authenticated ones. Captured into `routes` so the
 // inferred AppType carries the routes to the Hono RPC client.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- consumed by `export type AppType = typeof routes` below (Hono RPC type capture)
 const routes = app.route('/api/links', linkRoutes)
 
 // Protected routes example
