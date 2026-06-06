@@ -27,3 +27,16 @@ export function useCreateLink() {
     },
   })
 }
+
+// DELETE /api/links/:id → hard delete (clicks cascade), then refetch the list.
+// No optimistic removal (per project constraints) — invalidate and refetch.
+export function useDeleteLink() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      unwrap(client.api.links[':id'].$delete({ param: { id } })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: linksQueryKey })
+    },
+  })
+}
