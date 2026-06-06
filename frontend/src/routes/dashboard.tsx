@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { LinkCard } from '@/components/link-card'
 import { useLinks } from '@/hooks/use-links'
@@ -18,11 +18,20 @@ function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your short links and view their analytics.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your short links and view their analytics.
+          </p>
+        </div>
+        <Link
+          to="/links/new"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          <PlusIcon />
+          Create link
+        </Link>
       </div>
 
       <section aria-labelledby="links-heading" className="mt-8">
@@ -104,6 +113,30 @@ function EmptyState() {
       <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
         Your short links will appear here once you create them.
       </p>
+      <Link
+        to="/links/new"
+        className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+      >
+        <PlusIcon />
+        Create your first link
+      </Link>
     </div>
+  )
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-4"
+    >
+      <path d="M12 5v14M5 12h14" />
+    </svg>
   )
 }
