@@ -12,6 +12,7 @@ import {
 } from '../lib/schemas'
 import { ApiError } from '../lib/errors'
 import { generateSlug } from '../lib/slug'
+import { getLinkAnalytics } from '../lib/analytics'
 
 type LinkRow = typeof links.$inferSelect
 
@@ -94,6 +95,19 @@ async function requireOwnedLink(id: string, userId: string): Promise<LinkRow> {
   return link
 }
 
+// Log analytics endpoint latency (SPEC §9/§12 — analytics timing + the < 300ms
+// target). console.info normally; console.warn if it breaches the 300ms SLO. These
+// are intentional observability logs, not debug output.
+function logAnalytics(id: string, start: number): void {
+  const ms = Math.round(performance.now() - start)
+  const line = `[analytics] ${id} -> ${ms}ms`
+  if (ms > 300) {
+    console.warn(line)
+  } else {
+    console.info(line)
+  }
+}
+
 // Rate limit writes — 60 POST/PUT/DELETE per minute per IP (abuse protection);
 // GET reads are unthrottled. Lives on the router so '*' matches each route once
 // (an app-level '/api/links/*' also matches the bare collection, double-counting
@@ -126,6 +140,19 @@ const linkRoutes = new Hono()
       .orderBy(desc(links.createdAt))
 
     return c.json({ links: rows.map((row) => toListItem(row, row.clickCount)) })
+  })
+  .get('/:id/analytics', async (c) => {
+    const start = performance.now()
+    const userId = c.get('user').id
+    const id = c.req.param('id')
+
+    // Ownership before any analytics work — 404 if missing, 403 if it belongs to
+    // another user (SPEC §7: never 404 for someone else's link).
+    await requireOwnedLink(id, userId)
+
+    const analytics = await getLinkAnalytics(id)
+    logAnalytics(id, start)
+    return c.json(analytics)
   })
   .post('/', validate('json', createLinkSchema), async (c) => {
     const userId = c.get('user').id
