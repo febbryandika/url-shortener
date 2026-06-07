@@ -7,10 +7,12 @@ import { useLinkAnalytics } from '@/hooks/use-analytics'
 import { useLinks } from '@/hooks/use-links'
 import { requireSession } from '@/lib/auth-guard'
 import { ApiError } from '@/lib/api'
+import { RouteErrorBoundary } from '@/components/route-error-boundary'
 
 export const Route = createFileRoute('/links/$id')({
   beforeLoad: requireSession,
   component: AnalyticsPage,
+  errorComponent: RouteErrorBoundary,
 })
 
 function AnalyticsPage() {
