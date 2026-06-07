@@ -37,3 +37,27 @@ export function RouteErrorBoundary({ error, reset }: ErrorComponentProps) {
     </div>
   )
 }
+
+// Root not-found screen (SPEC §12) — shown for any unmatched in-app route. A 404
+// isn't an error, so it uses neutral card styling rather than the destructive
+// boundary above. Wired as the router's notFoundComponent in __root.tsx.
+export function NotFound() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center p-6">
+      <div className="w-full max-w-md rounded-lg border border-border bg-card p-8 text-center">
+        <h1 className="text-lg font-semibold text-foreground">Page not found</h1>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+          The page you're looking for doesn't exist or may have moved.
+        </p>
+        <div className="mt-5 flex items-center justify-center">
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Go to dashboard
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
