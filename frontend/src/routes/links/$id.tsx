@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { DashboardLayout } from '@/components/dashboard-layout'
+import { ClickChart } from '@/components/click-chart'
 import { useLinkAnalytics } from '@/hooks/use-analytics'
 import { useLinks } from '@/hooks/use-links'
 import { requireSession } from '@/lib/auth-guard'
@@ -52,13 +53,27 @@ function AnalyticsPage() {
             {error.message}
           </p>
         ) : (
-          // The chart and breakdown sections are added by the following tasks.
-          <div className="grid gap-4 sm:grid-cols-2">
-            <StatTile label="Total clicks" value={data.totalClicks} />
-            <StatTile
-              label="Last 30 days"
-              value={data.daily.reduce((sum, d) => sum + d.count, 0)}
-            />
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <StatTile label="Total clicks" value={data.totalClicks} />
+              <StatTile
+                label="Last 30 days"
+                value={data.daily.reduce((sum, d) => sum + d.count, 0)}
+              />
+            </div>
+
+            <section
+              aria-labelledby="chart-heading"
+              className="rounded-lg border border-border bg-card p-4"
+            >
+              <h2 id="chart-heading" className="text-sm font-medium">
+                Clicks over the last 30 days
+              </h2>
+              <div className="mt-4">
+                <ClickChart data={data.daily} />
+              </div>
+            </section>
+            {/* Referrers + browser breakdown sections are added next. */}
           </div>
         )}
       </div>
