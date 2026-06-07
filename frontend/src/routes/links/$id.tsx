@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { ClickChart } from '@/components/click-chart'
+import { ReferrerTable } from '@/components/referrer-table'
 import { useLinkAnalytics } from '@/hooks/use-analytics'
 import { useLinks } from '@/hooks/use-links'
 import { requireSession } from '@/lib/auth-guard'
@@ -73,7 +74,20 @@ function AnalyticsPage() {
                 <ClickChart data={data.daily} />
               </div>
             </section>
-            {/* Referrers + browser breakdown sections are added next. */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <section
+                aria-labelledby="referrers-heading"
+                className="rounded-lg border border-border bg-card p-4"
+              >
+                <h2 id="referrers-heading" className="text-sm font-medium">
+                  Top referrers
+                </h2>
+                <div className="mt-4">
+                  <ReferrerTable referrers={data.referrers} />
+                </div>
+              </section>
+              {/* Browser breakdown section added in Task 5. */}
+            </div>
           </div>
         )}
       </div>
