@@ -69,8 +69,8 @@ export function ClickChart({ data }: { data: DailyPoint[] }) {
   const series = useMemo(() => fillDailySeries(data), [data])
 
   return (
-    <div className="h-72 w-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full">
+      <ResponsiveContainer width="100%" height={288}>
         <BarChart
           data={series}
           margin={{ top: 8, right: 8, bottom: 0, left: -8 }}
@@ -112,6 +112,7 @@ export function ClickChart({ data }: { data: DailyPoint[] }) {
             fill={colors.bar}
             radius={[4, 4, 0, 0]}
             maxBarSize={28}
+            isAnimationActive={false}
           />
         </BarChart>
       </ResponsiveContainer>
