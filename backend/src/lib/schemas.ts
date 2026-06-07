@@ -83,6 +83,18 @@ export type LinkListItem = {
   createdAt: string // ISO 8601
 }
 
+// GET /api/links/:id/analytics response (SPEC §3.3/§5). Counts are computed per
+// request from the clicks table — nothing is cached. `daily` contains only days
+// that actually have clicks (within the last 30); the frontend ClickChart fills
+// the gaps with 0 so it always renders 30 bars.
+export type AnalyticsResponse = {
+  totalClicks: number
+  daily: Array<{ date: string; count: number }> // ISO date string (YYYY-MM-DD)
+  referrers: Array<{ referrer: string; count: number }> // top 5; null → "Direct"
+  browsers: Array<{ browser: string; count: number }>
+  devices: Array<{ deviceType: string; count: number }>
+}
+
 // ── Shared API error contract (SPEC §5) ───────────────────────────────────────
 
 // Every API error response uses this shape. Shared so the frontend can type
