@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { requestId } from 'hono/request-id'
+import { secureHeaders } from 'hono/secure-headers'
 import { auth } from './lib/auth'
 import { requireAuth } from './lib/middleware'
 import { rateLimit } from './lib/rate-limit'
@@ -17,6 +18,12 @@ const app = new Hono()
 // header carry the same id.
 app.use('*', requestId())
 app.use('*', logger())
+// Security response headers (SPEC §7/§12). Hono's defaults cover X-Content-Type-Options:
+// nosniff, X-Frame-Options, Referrer-Policy, HSTS, and stripping X-Powered-By. CORP is set
+// to cross-origin (not the same-origin default) because the SPA consumes this API cross-
+// origin and the public QR PNG is loaded via <img> from the frontend origin — same-origin
+// would block it. No CSP here: that belongs on the Vite-served frontend, not JSON responses.
+app.use('*', secureHeaders({ crossOriginResourcePolicy: 'cross-origin' }))
 app.use(
   '*',
   cors({
