@@ -53,3 +53,14 @@ async function toApiError(res: {
   }
   return new ApiError(res.status, code, message)
 }
+
+// Retry policy for all queries (TanStack Query `retry`): never retry client errors —
+// a 4xx (400/401/403/404) won't fix itself, so retrying only delays the error UI —
+// but retry transient 5xx / network failures up to 3 times. Wired as the global
+// QueryClient default in main.tsx so every useQuery shares one rule (SPEC §12).
+export function retryQuery(failureCount: number, error: Error): boolean {
+  if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+    return false
+  }
+  return failureCount < 3
+}
