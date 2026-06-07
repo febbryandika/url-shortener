@@ -47,9 +47,7 @@ function AnalyticsPage() {
 
       <div className="mt-8">
         {isPending ? (
-          <p role="status" className="text-sm text-muted-foreground">
-            Loading analytics…
-          </p>
+          <AnalyticsSkeleton />
         ) : isError ? (
           <p role="alert" className="text-sm text-destructive">
             {error.message}
@@ -108,6 +106,31 @@ function AnalyticsPage() {
         )}
       </div>
     </DashboardLayout>
+  )
+}
+
+// Loading placeholder mirroring the real layout (stat tiles, chart, two
+// breakdown cards) so the page doesn't jump when data arrives. The pulsing blocks
+// are aria-hidden; the sr-only status announces loading to assistive tech.
+function AnalyticsSkeleton() {
+  const block = 'animate-pulse rounded-lg border border-border bg-card'
+  return (
+    <div>
+      <p role="status" className="sr-only">
+        Loading analytics…
+      </p>
+      <div aria-hidden="true" className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className={`h-24 ${block}`} />
+          <div className={`h-24 ${block}`} />
+        </div>
+        <div className={`h-80 ${block}`} />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className={`h-48 ${block}`} />
+          <div className={`h-48 ${block}`} />
+        </div>
+      </div>
+    </div>
   )
 }
 
