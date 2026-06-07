@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import type { MouseEvent } from 'react'
+import { Link } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { ApiError } from '@/lib/api'
@@ -124,7 +125,15 @@ export function LinkCard({ link }: { link: LinkListItem }) {
     <>
       <article className="flex h-full flex-col gap-3 rounded-lg border border-border bg-card p-4">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="line-clamp-2 font-medium leading-tight">{label}</h3>
+          <h3 className="line-clamp-2 font-medium leading-tight">
+            <Link
+              to="/links/$id"
+              params={{ id: link.id }}
+              className="hover:underline"
+            >
+              {label}
+            </Link>
+          </h3>
           <span className="shrink-0 rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
             {link.clickCount} {link.clickCount === 1 ? 'click' : 'clicks'}
           </span>

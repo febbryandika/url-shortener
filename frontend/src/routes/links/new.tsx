@@ -2,10 +2,12 @@ import { createFileRoute } from '@tanstack/react-router'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { CreateLinkForm } from '@/components/create-link-form'
 import { requireSession } from '@/lib/auth-guard'
+import { RouteErrorBoundary } from '@/components/route-error-boundary'
 
 export const Route = createFileRoute('/links/new')({
   beforeLoad: requireSession,
   component: NewLinkPage,
+  errorComponent: RouteErrorBoundary,
 })
 
 function NewLinkPage() {

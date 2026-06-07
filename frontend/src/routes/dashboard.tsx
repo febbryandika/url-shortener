@@ -3,10 +3,12 @@ import { DashboardLayout } from '@/components/dashboard-layout'
 import { LinkCard } from '@/components/link-card'
 import { useLinks } from '@/hooks/use-links'
 import { requireSession } from '@/lib/auth-guard'
+import { RouteErrorBoundary } from '@/components/route-error-boundary'
 
 export const Route = createFileRoute('/dashboard')({
   beforeLoad: requireSession,
   component: DashboardPage,
+  errorComponent: RouteErrorBoundary,
 })
 
 function DashboardPage() {
