@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { DashboardLayout } from '@/components/dashboard-layout'
 import { ClickChart } from '@/components/click-chart'
 import { ReferrerTable } from '@/components/referrer-table'
+import { BreakdownBars } from '@/components/breakdown-bars'
 import { useLinkAnalytics } from '@/hooks/use-analytics'
 import { useLinks } from '@/hooks/use-links'
 import { requireSession } from '@/lib/auth-guard'
@@ -86,7 +87,22 @@ function AnalyticsPage() {
                   <ReferrerTable referrers={data.referrers} />
                 </div>
               </section>
-              {/* Browser breakdown section added in Task 5. */}
+              <section
+                aria-labelledby="browsers-heading"
+                className="rounded-lg border border-border bg-card p-4"
+              >
+                <h2 id="browsers-heading" className="text-sm font-medium">
+                  Browsers
+                </h2>
+                <div className="mt-4">
+                  <BreakdownBars
+                    data={data.browsers.map((b) => ({
+                      label: b.browser,
+                      count: b.count,
+                    }))}
+                  />
+                </div>
+              </section>
             </div>
           </div>
         )}
