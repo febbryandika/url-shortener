@@ -33,13 +33,15 @@ function AnalyticsPage() {
           <ArrowLeftIcon />
           Back to dashboard
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight">{heading}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight break-words">
+          {heading}
+        </h1>
         {link && (
           <a
             href={link.shortUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium text-primary hover:underline"
+            className="inline-block break-all text-sm font-medium text-primary hover:underline"
           >
             {link.shortUrl}
           </a>
