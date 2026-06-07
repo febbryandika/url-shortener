@@ -6,6 +6,7 @@ import { BreakdownBars } from '@/components/breakdown-bars'
 import { useLinkAnalytics } from '@/hooks/use-analytics'
 import { useLinks } from '@/hooks/use-links'
 import { requireSession } from '@/lib/auth-guard'
+import { ApiError } from '@/lib/api'
 
 export const Route = createFileRoute('/links/$id')({
   beforeLoad: requireSession,
@@ -14,7 +15,7 @@ export const Route = createFileRoute('/links/$id')({
 
 function AnalyticsPage() {
   const { id } = Route.useParams()
-  const { data, isPending, isError, error } = useLinkAnalytics(id)
+  const { data, isPending, isError, error, refetch } = useLinkAnalytics(id)
 
   // Link metadata for the header (title + short URL). There's no single-link GET
   // endpoint, so we read it from the cached ['links'] list (SPEC §6 data strategy).
@@ -49,9 +50,7 @@ function AnalyticsPage() {
         {isPending ? (
           <AnalyticsSkeleton />
         ) : isError ? (
-          <p role="alert" className="text-sm text-destructive">
-            {error.message}
-          </p>
+          <AnalyticsUnavailable error={error} onRetry={() => refetch()} />
         ) : (
           <div className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -62,46 +61,52 @@ function AnalyticsPage() {
               />
             </div>
 
-            <section
-              aria-labelledby="chart-heading"
-              className="rounded-lg border border-border bg-card p-4"
-            >
-              <h2 id="chart-heading" className="text-sm font-medium">
-                Clicks over the last 30 days
-              </h2>
-              <div className="mt-4">
-                <ClickChart data={data.daily} />
-              </div>
-            </section>
-            <div className="grid gap-6 lg:grid-cols-2">
-              <section
-                aria-labelledby="referrers-heading"
-                className="rounded-lg border border-border bg-card p-4"
-              >
-                <h2 id="referrers-heading" className="text-sm font-medium">
-                  Top referrers
-                </h2>
-                <div className="mt-4">
-                  <ReferrerTable referrers={data.referrers} />
+            {data.totalClicks === 0 ? (
+              <NoClicksState />
+            ) : (
+              <>
+                <section
+                  aria-labelledby="chart-heading"
+                  className="rounded-lg border border-border bg-card p-4"
+                >
+                  <h2 id="chart-heading" className="text-sm font-medium">
+                    Clicks over the last 30 days
+                  </h2>
+                  <div className="mt-4">
+                    <ClickChart data={data.daily} />
+                  </div>
+                </section>
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <section
+                    aria-labelledby="referrers-heading"
+                    className="rounded-lg border border-border bg-card p-4"
+                  >
+                    <h2 id="referrers-heading" className="text-sm font-medium">
+                      Top referrers
+                    </h2>
+                    <div className="mt-4">
+                      <ReferrerTable referrers={data.referrers} />
+                    </div>
+                  </section>
+                  <section
+                    aria-labelledby="browsers-heading"
+                    className="rounded-lg border border-border bg-card p-4"
+                  >
+                    <h2 id="browsers-heading" className="text-sm font-medium">
+                      Browsers
+                    </h2>
+                    <div className="mt-4">
+                      <BreakdownBars
+                        data={data.browsers.map((b) => ({
+                          label: b.browser,
+                          count: b.count,
+                        }))}
+                      />
+                    </div>
+                  </section>
                 </div>
-              </section>
-              <section
-                aria-labelledby="browsers-heading"
-                className="rounded-lg border border-border bg-card p-4"
-              >
-                <h2 id="browsers-heading" className="text-sm font-medium">
-                  Browsers
-                </h2>
-                <div className="mt-4">
-                  <BreakdownBars
-                    data={data.browsers.map((b) => ({
-                      label: b.browser,
-                      count: b.count,
-                    }))}
-                  />
-                </div>
-              </section>
-            </div>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -130,6 +135,82 @@ function AnalyticsSkeleton() {
           <div className={`h-48 ${block}`} />
         </div>
       </div>
+    </div>
+  )
+}
+
+// Map a failed analytics fetch to user-facing copy. 404/403 are terminal (the
+// link is gone or not theirs), so they get a "Back to dashboard" action instead of
+// a pointless retry; everything else (5xx / network) is retryable (SPEC §10).
+function describeError(error: Error): {
+  title: string
+  message: string
+  retryable: boolean
+} {
+  if (error instanceof ApiError && error.status === 404) {
+    return {
+      title: 'Link not found',
+      message: 'This link doesn’t exist or may have been deleted.',
+      retryable: false,
+    }
+  }
+  if (error instanceof ApiError && error.status === 403) {
+    return {
+      title: 'Access denied',
+      message: 'You don’t have permission to view this link’s analytics.',
+      retryable: false,
+    }
+  }
+  return {
+    title: 'Analytics unavailable',
+    message: 'We couldn’t load analytics for this link. Please try again.',
+    retryable: true,
+  }
+}
+
+// "Analytics unavailable" state (SPEC §10), shown when the analytics query fails.
+function AnalyticsUnavailable({
+  error,
+  onRetry,
+}: {
+  error: Error
+  onRetry: () => void
+}) {
+  const { title, message, retryable } = describeError(error)
+  const actionClass =
+    'mt-4 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90'
+  return (
+    <div
+      role="alert"
+      className="rounded-lg border border-destructive/50 bg-destructive/10 p-8 text-center"
+    >
+      <h2 className="text-base font-medium text-foreground">{title}</h2>
+      <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+        {message}
+      </p>
+      {retryable ? (
+        <button type="button" onClick={onRetry} className={actionClass}>
+          Try again
+        </button>
+      ) : (
+        <Link to="/dashboard" className={actionClass}>
+          Back to dashboard
+        </Link>
+      )}
+    </div>
+  )
+}
+
+// Empty state for a link that exists but has no clicks yet — friendlier than an
+// empty chart and zeroed-out tables.
+function NoClicksState() {
+  return (
+    <div className="rounded-lg border border-dashed border-border p-10 text-center">
+      <h2 className="text-base font-medium">No clicks yet</h2>
+      <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+        Share this short link to start collecting clicks — analytics will appear
+        here.
+      </p>
     </div>
   )
 }
