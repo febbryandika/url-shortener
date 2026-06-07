@@ -7,6 +7,7 @@ import { requireAuth } from './lib/middleware'
 import { rateLimit } from './lib/rate-limit'
 import { errorHandler, notFoundHandler } from './lib/errors'
 import linkRoutes from './routes/links'
+import qrRoutes from './routes/qr'
 import redirectRoutes from './routes/redirect'
 import './types'
 
@@ -46,6 +47,13 @@ app.get('/api/health', (c) => c.json({ status: 'ok' }))
 // these for unauthenticated requests — 401 before the rate limiter ever runs —
 // and double-run auth for authenticated ones. Captured into `routes` so the
 // inferred AppType carries the routes to the Hono RPC client.
+// Public QR endpoint (SPEC §5/§7): GET /api/links/:id/qr returns a PNG with no auth
+// so the code stays shareable/printable. Mounted BEFORE the authed linkRoutes (and
+// the `/api` requireAuth sub-app below) so its handler runs and returns first —
+// requireAuth never sees the request. Not captured into `routes`/AppType: the
+// frontend loads it via a plain <img>, not the RPC client (like the redirect route).
+app.route('/api/links', qrRoutes)
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- consumed by `export type AppType = typeof routes` below (Hono RPC type capture)
 const routes = app.route('/api/links', linkRoutes)
 

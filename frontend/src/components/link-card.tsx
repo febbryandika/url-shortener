@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { ApiError } from '@/lib/api'
 import { useDeleteLink } from '@/hooks/use-links'
 import { EditLinkDialog } from '@/components/edit-link-dialog'
+import { QrModal } from '@/components/qr-modal'
 import type { LinkListItem } from '../../../backend/src/lib/schemas'
 
 function CopyIcon() {
@@ -181,6 +182,7 @@ export function LinkCard({ link }: { link: LinkListItem }) {
             </span>
           )}
           <div className="ml-auto flex items-center gap-0.5">
+            <QrModal linkId={link.id} slug={link.slug} />
             <EditLinkDialog link={link} />
             <button
               type="button"
@@ -201,7 +203,10 @@ export function LinkCard({ link }: { link: LinkListItem }) {
         className="m-auto w-[90vw] max-w-sm rounded-lg p-0 backdrop:bg-black/50"
       >
         <div className="bg-card p-6 text-foreground">
-          <h2 id={`delete-title-${link.id}`} className="text-base font-semibold">
+          <h2
+            id={`delete-title-${link.id}`}
+            className="text-base font-semibold"
+          >
             Delete link?
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">

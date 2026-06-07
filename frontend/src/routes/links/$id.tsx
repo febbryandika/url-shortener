@@ -3,6 +3,7 @@ import { DashboardLayout } from '@/components/dashboard-layout'
 import { ClickChart } from '@/components/click-chart'
 import { ReferrerTable } from '@/components/referrer-table'
 import { BreakdownBars } from '@/components/breakdown-bars'
+import { QrModal } from '@/components/qr-modal'
 import { useLinkAnalytics } from '@/hooks/use-analytics'
 import { useLinks } from '@/hooks/use-links'
 import { requireSession } from '@/lib/auth-guard'
@@ -39,14 +40,17 @@ function AnalyticsPage() {
           {heading}
         </h1>
         {link && (
-          <a
-            href={link.shortUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block break-all text-sm font-medium text-primary hover:underline"
-          >
-            {link.shortUrl}
-          </a>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <a
+              href={link.shortUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block break-all text-sm font-medium text-primary hover:underline"
+            >
+              {link.shortUrl}
+            </a>
+            <QrModal linkId={link.id} slug={link.slug} />
+          </div>
         )}
       </div>
 
