@@ -13,6 +13,7 @@ import {
 import { ApiError } from '../lib/errors'
 import { generateSlug } from '../lib/slug'
 import { getLinkAnalytics } from '../lib/analytics'
+import { toShortUrl } from '../lib/short-url'
 
 type LinkRow = typeof links.$inferSelect
 
@@ -22,17 +23,6 @@ type LinkListSource = Pick<
   LinkRow,
   'id' | 'slug' | 'url' | 'title' | 'expiresAt' | 'createdAt'
 >
-
-// Absolute base for short URLs — the backend serves /r/:slug (SPEC §2), so its
-// own origin is the short-link host. Trailing slash trimmed so we never emit
-// `…//r/slug`.
-const shortUrlBase = (
-  process.env.BETTER_AUTH_URL ?? 'http://localhost:3000'
-).replace(/\/+$/, '')
-
-function toShortUrl(slug: string): string {
-  return `${shortUrlBase}/r/${slug}`
-}
 
 // Serialise a DB row into the API list-item shape (SPEC §5): timestamps as ISO
 // strings, clickCount supplied by the caller (computed per request, not stored).
