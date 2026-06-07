@@ -52,14 +52,30 @@ function AnalyticsPage() {
             {error.message}
           </p>
         ) : (
-          // Placeholder — replaced by the stat tiles, chart, and breakdowns in the
-          // following tasks.
-          <p className="text-sm text-muted-foreground">
-            Total clicks: {data.totalClicks}
-          </p>
+          // The chart and breakdown sections are added by the following tasks.
+          <div className="grid gap-4 sm:grid-cols-2">
+            <StatTile label="Total clicks" value={data.totalClicks} />
+            <StatTile
+              label="Last 30 days"
+              value={data.daily.reduce((sum, d) => sum + d.count, 0)}
+            />
+          </div>
         )}
       </div>
     </DashboardLayout>
+  )
+}
+
+// A single headline metric (SPEC §3.3 total clicks). tabular-nums keeps the
+// digits aligned; toLocaleString adds thousands separators.
+function StatTile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-5">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-1 text-3xl font-semibold tabular-nums">
+        {value.toLocaleString()}
+      </p>
+    </div>
   )
 }
 
