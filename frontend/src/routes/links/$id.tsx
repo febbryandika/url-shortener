@@ -112,6 +112,22 @@ function AnalyticsPage() {
                       />
                     </div>
                   </section>
+                  <section
+                    aria-labelledby="devices-heading"
+                    className="rounded-lg border border-border bg-card p-4"
+                  >
+                    <h2 id="devices-heading" className="text-sm font-medium">
+                      Devices
+                    </h2>
+                    <div className="mt-4">
+                      <BreakdownBars
+                        data={data.devices.map((d) => ({
+                          label: d.deviceType,
+                          count: d.count,
+                        }))}
+                      />
+                    </div>
+                  </section>
                 </div>
               </>
             )}
@@ -139,6 +155,7 @@ function AnalyticsSkeleton() {
         </div>
         <div className={`h-80 ${block}`} />
         <div className="grid gap-6 lg:grid-cols-2">
+          <div className={`h-48 ${block}`} />
           <div className={`h-48 ${block}`} />
           <div className={`h-48 ${block}`} />
         </div>

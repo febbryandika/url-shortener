@@ -68,6 +68,11 @@ const routes = app.route('/api/links', linkRoutes)
 // sub-app below, so it stays accessible without authentication. Not captured into
 // `routes` — the browser navigates here directly (not an RPC endpoint), so it
 // stays out of AppType and the frontend typecheck.
+// Rate limit the public redirect — 60 req/min per IP (SPEC §7): prevents click /
+// analytics inflation and abuse. Applied at the mount (like the auth limiter above)
+// so the redirect handler stays focused; a throttled visitor gets a 429 { error, code }.
+const redirectRateLimit = rateLimit({ windowMs: 60_000, limit: 60 })
+app.use('/r/*', redirectRateLimit)
 app.route('/r', redirectRoutes)
 
 // Protected routes example
