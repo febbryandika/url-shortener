@@ -73,9 +73,9 @@ describe('isErrorResponse', () => {
 
 describe('createLinkSchema', () => {
   test('accepts a minimal body (url only) and a full body', () => {
-    expect(createLinkSchema.safeParse({ url: 'https://example.com' }).success).toBe(
-      true,
-    )
+    expect(
+      createLinkSchema.safeParse({ url: 'https://example.com' }).success,
+    ).toBe(true)
     expect(
       createLinkSchema.safeParse({
         url: 'https://example.com/page',
@@ -99,8 +99,10 @@ describe('createLinkSchema', () => {
         .success,
     ).toBe(false) // too short
     expect(
-      createLinkSchema.safeParse({ url: 'https://example.com', slug: 'Bad Slug' })
-        .success,
+      createLinkSchema.safeParse({
+        url: 'https://example.com',
+        slug: 'Bad Slug',
+      }).success,
     ).toBe(false) // uppercase + space
   })
 

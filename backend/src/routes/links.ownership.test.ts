@@ -43,8 +43,9 @@ describe('requireOwnedLink', () => {
   // a 404 would leak whether that id exists.
   test('throws 403 FORBIDDEN for a link owned by another user', async () => {
     stubLookup(link)
-    await expect(
-      requireOwnedLink('l1', 'someone-else'),
-    ).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN' })
+    await expect(requireOwnedLink('l1', 'someone-else')).rejects.toMatchObject({
+      status: 403,
+      code: 'FORBIDDEN',
+    })
   })
 })
