@@ -91,3 +91,28 @@ describe('GET /r/:slug', () => {
     })
   })
 })
+
+describe('GET /r/:slug — expiry (SPEC §3.2/§7)', () => {
+  test('expired link (past expiresAt) → 410 and no redirect', async () => {
+    stubLookup({
+      id: 'l1',
+      url: 'https://example.com',
+      expiresAt: new Date(Date.now() - 60_000),
+    })
+    const res = await redirectRoutes.request('/abc1234')
+    expect(res.status).toBe(410)
+    expect(res.headers.get('location')).toBeNull()
+  })
+
+  test('not-yet-expired link (future expiresAt) → 302', async () => {
+    stubLookup({
+      id: 'l1',
+      url: 'https://example.com/page',
+      expiresAt: new Date(Date.now() + 60_000),
+    })
+    captureClick()
+    const res = await redirectRoutes.request('/abc1234')
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toBe('https://example.com/page')
+  })
+})
