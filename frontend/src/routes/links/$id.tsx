@@ -9,6 +9,7 @@ import { useLinks } from '@/hooks/use-links'
 import { requireSession } from '@/lib/auth-guard'
 import { ApiError } from '@/lib/api'
 import { RouteErrorBoundary } from '@/components/route-error-boundary'
+import { NoClicksState } from '@/components/analytics-states'
 
 export const Route = createFileRoute('/links/$id')({
   beforeLoad: requireSession,
@@ -222,20 +223,6 @@ function AnalyticsUnavailable({
           Back to dashboard
         </Link>
       )}
-    </div>
-  )
-}
-
-// Empty state for a link that exists but has no clicks yet — friendlier than an
-// empty chart and zeroed-out tables.
-function NoClicksState() {
-  return (
-    <div className="rounded-lg border border-dashed border-border p-10 text-center">
-      <h2 className="text-base font-medium">No clicks yet</h2>
-      <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-        Share this short link to start collecting clicks — analytics will appear
-        here.
-      </p>
     </div>
   )
 }

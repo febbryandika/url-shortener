@@ -4,6 +4,7 @@ import { LinkCard } from '@/components/link-card'
 import { useLinks } from '@/hooks/use-links'
 import { requireSession } from '@/lib/auth-guard'
 import { RouteErrorBoundary } from '@/components/route-error-boundary'
+import { EmptyState } from '@/components/dashboard-states'
 
 export const Route = createFileRoute('/dashboard')({
   beforeLoad: requireSession,
@@ -104,24 +105,6 @@ function ErrorState({
       >
         Try again
       </button>
-    </div>
-  )
-}
-
-function EmptyState() {
-  return (
-    <div className="rounded-lg border border-dashed border-border p-10 text-center">
-      <h3 className="text-base font-medium">No links yet</h3>
-      <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-        Your short links will appear here once you create them.
-      </p>
-      <Link
-        to="/links/new"
-        className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-      >
-        <PlusIcon />
-        Create your first link
-      </Link>
     </div>
   )
 }
