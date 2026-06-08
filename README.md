@@ -106,6 +106,95 @@ Frontend (`cd frontend`):
 | `bun run typecheck` | Type-check (`tsc -b`)         |
 | `bun run build`     | Type-check + production build |
 
+## API reference
+
+All routes are served from the backend origin (default `http://localhost:3000`). Authenticated routes use the better-auth session cookie, which the frontend RPC client sends automatically (`credentials: 'include'`).
+
+| Method   | Path                       |  Auth   | Description                                                                                       |
+| -------- | -------------------------- | :-----: | ------------------------------------------------------------------------------------------------- |
+| `GET`    | `/r/:slug`                 | Public  | Redirect to the destination and log a click. `404` if unknown, `410` if expired, otherwise `302`. |
+| `GET`    | `/api/links`               | Session | List the current user's links, each with a `clickCount`.                                          |
+| `POST`   | `/api/links`               | Session | Create a short link.                                                                              |
+| `PUT`    | `/api/links/:id`           | Session | Update a link's `title` / `expiresAt` (slug and URL are immutable).                               |
+| `DELETE` | `/api/links/:id`           | Session | Delete a link (its clicks cascade).                                                               |
+| `GET`    | `/api/links/:id/analytics` | Session | Aggregated click data for the charts.                                                             |
+| `GET`    | `/api/links/:id/qr`        | Public  | PNG QR code for the link — public so it stays shareable/printable.                                |
+| `*`      | `/api/auth/**`             | Public  | better-auth (sign-up, sign-in, sign-out, session).                                                |
+| `GET`    | `/api/health`              | Public  | Health check (`{ "status": "ok" }`).                                                              |
+
+**Ownership:** the link routes confirm the link belongs to the caller. A link owned by someone else returns `403 FORBIDDEN` — never `404` — so link ids aren't leaked.
+
+### Create a link — `POST /api/links`
+
+```json
+{
+  "url": "https://example.com/some/long/path",
+  "slug": "my-link",
+  "title": "My link",
+  "expiresAt": "2030-01-01T00:00:00.000Z"
+}
+```
+
+- `url` — **required**, must be `http(s)`.
+- `slug` — optional, must match `[a-z0-9-]{3,32}`; a 7-character slug is generated if omitted.
+- `title` — optional, ≤ 100 characters.
+- `expiresAt` — optional, ISO 8601 datetime.
+
+A taken custom slug returns `409` with code `SLUG_TAKEN`.
+
+### List links — `GET /api/links`
+
+```json
+{
+  "links": [
+    {
+      "id": "tz4a98xxat96iws9zmbrgj3a",
+      "slug": "my-link",
+      "url": "https://example.com/some/long/path",
+      "title": "My link",
+      "shortUrl": "http://localhost:3000/r/my-link",
+      "expiresAt": null,
+      "clickCount": 42,
+      "createdAt": "2026-06-01T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+`clickCount` is computed per request with a `COUNT` sub-query; it isn't stored on the row.
+
+### Analytics — `GET /api/links/:id/analytics`
+
+```json
+{
+  "totalClicks": 128,
+  "daily": [{ "date": "2026-06-01", "count": 12 }],
+  "referrers": [{ "referrer": "Direct", "count": 30 }],
+  "browsers": [{ "browser": "Chrome", "count": 80 }],
+  "devices": [{ "deviceType": "Mobile", "count": 64 }]
+}
+```
+
+`daily` contains only the days that had clicks within the last 30 (the chart fills the gaps with 0). A null referrer is surfaced as `"Direct"`, and `referrers` is capped at the top 5.
+
+### Errors
+
+Every API error uses the same structured body:
+
+```json
+{ "error": "Human-readable message", "code": "MACHINE_CODE" }
+```
+
+Common codes: `VALIDATION_ERROR` (400), `UNAUTHORIZED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `SLUG_TAKEN` (409), `RATE_LIMITED` (429), `INTERNAL_ERROR` (500).
+
+### Rate limits
+
+| Scope                                         | Limit                       |
+| --------------------------------------------- | --------------------------- |
+| `GET /r/:slug` (redirect)                     | 60 requests / minute per IP |
+| `POST /api/auth/*` (login / register)         | 10 requests / minute per IP |
+| Link writes (`POST` / `PUT` / `DELETE` links) | 60 requests / minute per IP |
+
 ## Testing
 
 Tests are intentionally lightweight and focus on the important business logic.
