@@ -26,12 +26,11 @@ Built as a Bun monorepo with **end-to-end type safety**: the React frontend call
 
 ## Screenshots
 
-> Placeholders — replace the files in [`docs/screenshots/`](docs/screenshots) with real captures (PNG or a short GIF).
-
-|                                              |                                                  |
-| -------------------------------------------- | ------------------------------------------------ |
-| ![Dashboard](docs/screenshots/dashboard.svg) | ![Create link](docs/screenshots/create-link.svg) |
-| ![Analytics](docs/screenshots/analytics.svg) | ![QR code](docs/screenshots/qr-modal.svg)        |
+|                  Dashboard                   |                   Create a link                    |
+| :------------------------------------------: | :------------------------------------------------: |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Create a link](docs/screenshots/create-link.png) |
+|              **Link analytics**              |                    **QR code**                     |
+| ![Analytics](docs/screenshots/analytics.png) |     ![QR code](docs/screenshots/qr-modal.png)      |
 
 ## Prerequisites
 
