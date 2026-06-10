@@ -57,21 +57,29 @@ bun run dev:frontend   # Vite dev server on :5173
 
 ## Environment variables
 
+Each workspace ships a `.env.example`; copy it and fill in the values (the `cp` commands are in [Getting started](#getting-started)).
+
 ### `backend/.env`
 
 | Variable             | Description                                        |
 | -------------------- | -------------------------------------------------- |
 | `DATABASE_URL`       | Neon PostgreSQL connection string                  |
-| `BETTER_AUTH_SECRET` | Auth signing secret (`openssl rand -base64 32`)    |
+| `BETTER_AUTH_SECRET` | Secret used to sign auth sessions                  |
 | `BETTER_AUTH_URL`    | Backend base URL (e.g. `http://localhost:3000`)    |
 | `FRONTEND_URL`       | Allowed CORS origin (e.g. `http://localhost:5173`) |
-| `PORT`               | Backend port (e.g. `3000`)                         |
+| `PORT`               | Backend port (defaults to `3000`)                  |
 
 ### `frontend/.env`
 
 | Variable       | Description                                     |
 | -------------- | ----------------------------------------------- |
 | `VITE_API_URL` | Backend base URL (e.g. `http://localhost:3000`) |
+
+**Where the values come from:**
+
+- **`DATABASE_URL`** — create a free project at [Neon](https://neon.tech) and copy its connection string (e.g. `postgresql://user:pass@ep-xxx.neon.tech/dbname?sslmode=require`).
+- **`BETTER_AUTH_SECRET`** — generate one with `openssl rand -base64 32`.
+- **Keep the URLs consistent** — `BETTER_AUTH_URL` and `VITE_API_URL` both point at the backend, and `FRONTEND_URL` points at the frontend. The local defaults already line up; in production, set them to your deployed origins, since auth cookies and CORS depend on the match.
 
 ## Scripts
 
