@@ -106,6 +106,42 @@ Frontend (`cd frontend`):
 | `bun run typecheck` | Type-check (`tsc -b`)         |
 | `bun run build`     | Type-check + production build |
 
+## Architecture
+
+The app is a Bun monorepo with two workspaces — a Hono API (`backend`) and a React SPA (`frontend`) — that share TypeScript types and Zod schemas.
+
+**End-to-end type safety.** The backend exports its router type (`AppType` in `backend/src/index.ts`); the frontend builds its RPC client with `hc<AppType>(…)` (`frontend/src/lib/client.ts`). Because Hono infers request/response types through method chaining, changing a route's shape is type-checked against the frontend at compile time. The same Zod field schemas (`backend/src/lib/schemas.ts`) are imported by the create-link form, so client and server validation can't drift.
+
+**Request flow.**
+
+```mermaid
+flowchart LR
+  SPA["React SPA"]
+  Visitor["Link visitor"]
+
+  subgraph Backend["Hono API (Bun)"]
+    Auth["requireAuth"]
+    Links["Link + analytics routes"]
+    Redirect["GET /r/:slug"]
+    QR["GET /api/links/:id/qr"]
+  end
+
+  DB[("Neon Postgres")]
+
+  SPA -->|"RPC + session cookie"| Auth --> Links --> DB
+  Visitor -->|"GET /r/:slug"| Redirect -->|"302"| Visitor
+  Redirect -.->|"fire-and-forget click"| DB
+  Visitor -->|"img src"| QR --> DB
+```
+
+- **Redirects are fast and never block on analytics.** `GET /r/:slug` looks the slug up, returns `302` (or `404` / `410`), and logs the click with a fire-and-forget insert (`db.insert(...).catch(...)`) — the visitor is never delayed by the write. The User-Agent is parsed into a browser + device type at log time.
+- **Public routes live outside the auth boundary.** The redirect and the QR endpoint are mounted so their handlers run before `requireAuth`, keeping short links and printable QR codes usable without a session. Everything else under `/api` requires the session cookie.
+- **Rate limiting** sits in front of the redirect and the auth endpoints (in-memory, per-IP) to curb click inflation and brute-force attempts.
+
+**Data layer.** Drizzle ORM over Neon's `neon-http` driver — a stateless HTTP connection, so there's no pool to manage and the five analytics aggregations run concurrently. `clickCount` and the analytics figures are computed per request, not cached on the row.
+
+**Frontend data.** All server state flows through TanStack Query — `['links']` for the list, `['links', id, 'analytics']` for a link's analytics — rather than Router loaders. Mutations invalidate `['links']` to refetch, and a shared retry policy skips 4xx (a `403`/`404` won't fix itself) while retrying transient 5xx/network failures.
+
 ## API reference
 
 All routes are served from the backend origin (default `http://localhost:3000`). Authenticated routes use the better-auth session cookie, which the frontend RPC client sends automatically (`credentials: 'include'`).
