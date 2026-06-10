@@ -74,7 +74,11 @@ async function generateUniqueSlug(): Promise<string> {
 // Fetch a link by id and assert the caller owns it. Throws 404 if it doesn't
 // exist, 403 if it belongs to another user — never 404 for someone else's link
 // (SPEC §7: no information leakage). Returns the row for the handler to use.
-async function requireOwnedLink(id: string, userId: string): Promise<LinkRow> {
+// Exported so the authorization rule can be unit-tested directly (links.ownership.test.ts).
+export async function requireOwnedLink(
+  id: string,
+  userId: string,
+): Promise<LinkRow> {
   const link = await db.query.links.findFirst({ where: eq(links.id, id) })
   if (!link) {
     throw new ApiError(404, 'NOT_FOUND', 'Link not found')

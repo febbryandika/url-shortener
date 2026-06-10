@@ -9,6 +9,9 @@
     "dev": "bun run --concurrent dev:backend dev:frontend",
     "dev:backend": "cd backend && bun run dev",
     "dev:frontend": "cd frontend && bun run dev",
+    "test": "bun run test:backend && bun run test:frontend",
+    "test:backend": "cd backend && bun test",
+    "test:frontend": "cd frontend && bun run test",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

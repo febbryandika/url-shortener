@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'bun:test'
-import { isErrorResponse, slugSchema, urlSchema } from './schemas'
+import {
+  createLinkSchema,
+  isErrorResponse,
+  slugSchema,
+  updateLinkSchema,
+  urlSchema,
+} from './schemas'
 
 describe('urlSchema', () => {
   test('accepts http and https URLs', () => {
@@ -62,5 +68,75 @@ describe('isErrorResponse', () => {
     expect(isErrorResponse({ error: 1, code: 2 })).toBe(false) // wrong types
     expect(isErrorResponse(null)).toBe(false)
     expect(isErrorResponse('nope')).toBe(false)
+  })
+})
+
+describe('createLinkSchema', () => {
+  test('accepts a minimal body (url only) and a full body', () => {
+    expect(
+      createLinkSchema.safeParse({ url: 'https://example.com' }).success,
+    ).toBe(true)
+    expect(
+      createLinkSchema.safeParse({
+        url: 'https://example.com/page',
+        slug: 'my-link-1',
+        title: 'My link',
+        expiresAt: '2030-01-01T00:00:00.000Z',
+      }).success,
+    ).toBe(true)
+  })
+
+  test('rejects an invalid or dangerous url', () => {
+    expect(createLinkSchema.safeParse({ url: 'not-a-url' }).success).toBe(false)
+    expect(
+      createLinkSchema.safeParse({ url: 'javascript:alert(1)' }).success,
+    ).toBe(false)
+  })
+
+  test('rejects an invalid custom slug', () => {
+    expect(
+      createLinkSchema.safeParse({ url: 'https://example.com', slug: 'ab' })
+        .success,
+    ).toBe(false) // too short
+    expect(
+      createLinkSchema.safeParse({
+        url: 'https://example.com',
+        slug: 'Bad Slug',
+      }).success,
+    ).toBe(false) // uppercase + space
+  })
+
+  test('rejects an over-long title and a non-ISO expiresAt', () => {
+    expect(
+      createLinkSchema.safeParse({
+        url: 'https://example.com',
+        title: 'a'.repeat(101),
+      }).success,
+    ).toBe(false)
+    expect(
+      createLinkSchema.safeParse({
+        url: 'https://example.com',
+        expiresAt: '2030-01-01', // date only, not a datetime
+      }).success,
+    ).toBe(false)
+  })
+})
+
+describe('updateLinkSchema', () => {
+  test('accepts a title-only update, an empty body, and a null expiry', () => {
+    expect(updateLinkSchema.safeParse({ title: 'Renamed' }).success).toBe(true)
+    expect(updateLinkSchema.safeParse({}).success).toBe(true) // no-op update
+    expect(updateLinkSchema.safeParse({ expiresAt: null }).success).toBe(true) // clear expiry
+  })
+
+  test('rejects changes to the immutable slug or url (.strict)', () => {
+    expect(updateLinkSchema.safeParse({ slug: 'new-slug' }).success).toBe(false)
+    expect(
+      updateLinkSchema.safeParse({ url: 'https://example.com' }).success,
+    ).toBe(false)
+    expect(
+      updateLinkSchema.safeParse({ title: 'ok', url: 'https://example.com' })
+        .success,
+    ).toBe(false)
   })
 })

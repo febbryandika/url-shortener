@@ -8,6 +8,33 @@ import type { AnalyticsResponse } from './schemas'
 // run concurrently in getLinkAnalytics; neon-http is stateless HTTP, so issuing them
 // in parallel keeps the endpoint well under the 300ms target (SPEC §9).
 
+// ── Pure row → item mappers (SPEC §3.3/§5) ────────────────────────────────────
+// The grouped breakdown queries return a nullable label + count; these map the
+// rows to the API shape. A null referrer means direct navigation → "Direct".
+// recordClick always writes a browser/device, so those ?? fallbacks are defensive
+// (mirroring parseBrowser/parseDeviceType's own defaults). Extracted as pure
+// functions so the labelling logic is unit-testable without a database.
+export function toReferrers(
+  rows: Array<{ referrer: string | null; count: number }>,
+): AnalyticsResponse['referrers'] {
+  return rows.map((r) => ({ referrer: r.referrer ?? 'Direct', count: r.count }))
+}
+
+export function toBrowsers(
+  rows: Array<{ browser: string | null; count: number }>,
+): AnalyticsResponse['browsers'] {
+  return rows.map((r) => ({ browser: r.browser ?? 'Other', count: r.count }))
+}
+
+export function toDevices(
+  rows: Array<{ deviceType: string | null; count: number }>,
+): AnalyticsResponse['devices'] {
+  return rows.map((r) => ({
+    deviceType: r.deviceType ?? 'Desktop',
+    count: r.count,
+  }))
+}
+
 // Total clicks — correlated COUNT, the same helper the list route uses (links.ts).
 async function countTotalClicks(linkId: string): Promise<number> {
   return db.$count(clicks, eq(clicks.linkId, linkId))
@@ -45,7 +72,7 @@ async function topReferrers(
     .groupBy(clicks.referrer)
     .orderBy(desc(count()))
     .limit(5)
-  return rows.map((r) => ({ referrer: r.referrer ?? 'Direct', count: r.count }))
+  return toReferrers(rows)
 }
 
 // Clicks grouped by browser. The column is nullable, but recordClick always writes
@@ -58,7 +85,7 @@ async function browserBreakdown(
     .from(clicks)
     .where(eq(clicks.linkId, linkId))
     .groupBy(clicks.browser)
-  return rows.map((r) => ({ browser: r.browser ?? 'Other', count: r.count }))
+  return toBrowsers(rows)
 }
 
 // Clicks grouped by device type. ?? 'Desktop' mirrors parseDeviceType's own fallback.
@@ -70,10 +97,7 @@ async function deviceBreakdown(
     .from(clicks)
     .where(eq(clicks.linkId, linkId))
     .groupBy(clicks.deviceType)
-  return rows.map((r) => ({
-    deviceType: r.deviceType ?? 'Desktop',
-    count: r.count,
-  }))
+  return toDevices(rows)
 }
 
 // Assemble the full analytics payload (SPEC §5). The five aggregations are

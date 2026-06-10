@@ -1,0 +1,5 @@
+[test]
+# Set dummy-but-valid env before any test module loads, so module-load-time
+# validation (lib/env.ts) and neon() succeed without a real database. Tests stub
+# every DB call, so nothing ever connects.
+preload = ["./src/test/setup.ts"]
