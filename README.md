@@ -24,6 +24,15 @@ Built as a Bun monorepo with **end-to-end type safety**: the React frontend call
 | Shared   | Zod schemas + a Hono RPC client for end-to-end types                       |
 | Tooling  | TypeScript, ESLint, Prettier, Bun test + Vitest                            |
 
+## Screenshots
+
+> Placeholders — replace the files in [`docs/screenshots/`](docs/screenshots) with real captures (PNG or a short GIF).
+
+|                                              |                                                  |
+| -------------------------------------------- | ------------------------------------------------ |
+| ![Dashboard](docs/screenshots/dashboard.svg) | ![Create link](docs/screenshots/create-link.svg) |
+| ![Analytics](docs/screenshots/analytics.svg) | ![QR code](docs/screenshots/qr-modal.svg)        |
+
 ## Prerequisites
 
 - [Bun](https://bun.sh) — package manager and runtime
