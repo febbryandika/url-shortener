@@ -142,6 +142,47 @@ flowchart LR
 
 **Frontend data.** All server state flows through TanStack Query — `['links']` for the list, `['links', id, 'analytics']` for a link's analytics — rather than Router loaders. Mutations invalidate `['links']` to refetch, and a shared retry policy skips 4xx (a `403`/`404` won't fix itself) while retrying transient 5xx/network failures.
 
+## Database schema
+
+Two application tables — `links` and `clicks` — sit alongside the four tables better-auth manages (`user`, `session`, `account`, `verification`).
+
+```mermaid
+erDiagram
+  user ||--o{ links : "owns"
+  links ||--o{ clicks : "logs"
+
+  user {
+    text id PK
+    text email UK
+    text name
+  }
+  links {
+    text id PK
+    text user_id FK
+    text slug UK
+    text url
+    text title "nullable"
+    timestamptz expires_at "nullable"
+    timestamptz created_at
+  }
+  clicks {
+    text id PK
+    text link_id FK
+    timestamptz clicked_at
+    text referrer "nullable"
+    text browser "nullable"
+    text device_type "nullable"
+    text country "nullable"
+  }
+```
+
+- **Primary keys** for `links` and `clicks` are cuid2 strings (`createId()`), so link ids are non-guessable — which is what lets the QR endpoint stay public.
+- **Cascade deletes**: removing a user deletes their links, and removing a link deletes its clicks (`onDelete: 'cascade'`). Link deletion is a hard delete.
+- **Indexes**: `idx_link_user` (`user_id`), `idx_link_slug` (`slug`), and `idx_click_link_at` (`link_id`, `clicked_at`) — the last keeps the analytics range scans cheap.
+- **Privacy**: a click stores a coarse `country` (from the `CF-IPCountry` header) but never the visitor's IP address.
+
+Full definitions live in `backend/src/db/schema.ts`.
+
 ## API reference
 
 All routes are served from the backend origin (default `http://localhost:3000`). Authenticated routes use the better-auth session cookie, which the frontend RPC client sends automatically (`credentials: 'include'`).
